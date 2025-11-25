@@ -29,4 +29,4 @@ userSchema.methods.comparePassword = function (plain) {
 };
 
 module.exports = mongoose.model("User", userSchema);
-//edit
+//edited

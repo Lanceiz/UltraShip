@@ -2,7 +2,6 @@ const {
   GraphQLObjectType,
   GraphQLSchema,
   GraphQLString,
-  GraphQLNonNull,
   GraphQLID,
   GraphQLInt,
   GraphQLFloat,
@@ -10,6 +9,7 @@ const {
   GraphQLEnumType,
   GraphQLInputObjectType,
   GraphQLBoolean,
+  GraphQLNonNull,
 } = require("graphql");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
@@ -43,21 +43,23 @@ const RoleEnum = new GraphQLEnumType({
 const UserType = new GraphQLObjectType({
   name: "User",
   fields: () => ({
-    id: { type: GraphQLNonNull(GraphQLID) },
-    name: { type: GraphQLNonNull(GraphQLString) },
-    email: { type: GraphQLNonNull(GraphQLString) },
-    role: { type: GraphQLNonNull(RoleEnum) },
+    id: { type: new GraphQLNonNull(GraphQLID) },
+    name: { type: new GraphQLNonNull(GraphQLString) },
+    email: { type: new GraphQLNonNull(GraphQLString) },
+    role: { type: new GraphQLNonNull(RoleEnum) },
   }),
 });
 
 const EmployeeType = new GraphQLObjectType({
   name: "Employee",
   fields: () => ({
-    id: { type: GraphQLNonNull(GraphQLID) },
-    name: { type: GraphQLNonNull(GraphQLString) },
+    id: { type: new GraphQLNonNull(GraphQLID) },
+    name: { type: new GraphQLNonNull(GraphQLString) },
     age: { type: GraphQLInt },
     class: { type: GraphQLString },
-    subjects: { type: GraphQLList(GraphQLNonNull(GraphQLString)) },
+    subjects: {
+      type: new GraphQLList(new GraphQLNonNull(GraphQLString)),
+    },
     attendance: { type: GraphQLFloat },
     email: { type: GraphQLString },
     phone: { type: GraphQLString },
@@ -71,18 +73,22 @@ const EmployeeType = new GraphQLObjectType({
 const AuthPayloadType = new GraphQLObjectType({
   name: "AuthPayload",
   fields: () => ({
-    token: { type: GraphQLNonNull(GraphQLString) },
-    user: { type: GraphQLNonNull(UserType) },
+    token: { type: new GraphQLNonNull(GraphQLString) },
+    user: { type: new GraphQLNonNull(UserType) },
   }),
 });
 
 const EmployeePageType = new GraphQLObjectType({
   name: "EmployeePage",
   fields: () => ({
-    items: { type: GraphQLNonNull(GraphQLList(GraphQLNonNull(EmployeeType))) },
-    totalCount: { type: GraphQLNonNull(GraphQLInt) },
-    page: { type: GraphQLNonNull(GraphQLInt) },
-    pageSize: { type: GraphQLNonNull(GraphQLInt) },
+    items: {
+      type: new GraphQLNonNull(
+        new GraphQLList(new GraphQLNonNull(EmployeeType))
+      ),
+    },
+    totalCount: { type: new GraphQLNonNull(GraphQLInt) },
+    page: { type: new GraphQLNonNull(GraphQLInt) },
+    pageSize: { type: new GraphQLNonNull(GraphQLInt) },
   }),
 });
 
@@ -120,10 +126,12 @@ const EmployeeFilterInput = new GraphQLInputObjectType({
 const AddEmployeeInput = new GraphQLInputObjectType({
   name: "AddEmployeeInput",
   fields: {
-    name: { type: GraphQLNonNull(GraphQLString) },
+    name: { type: new GraphQLNonNull(GraphQLString) },
     age: { type: GraphQLInt },
     class: { type: GraphQLString },
-    subjects: { type: GraphQLList(GraphQLNonNull(GraphQLString)) },
+    subjects: {
+      type: new GraphQLList(new GraphQLNonNull(GraphQLString)),
+    },
     attendance: { type: GraphQLFloat },
     email: { type: GraphQLString },
     phone: { type: GraphQLString },
@@ -134,11 +142,13 @@ const AddEmployeeInput = new GraphQLInputObjectType({
 const UpdateEmployeeInput = new GraphQLInputObjectType({
   name: "UpdateEmployeeInput",
   fields: {
-    id: { type: GraphQLNonNull(GraphQLID) },
+    id: { type: new GraphQLNonNull(GraphQLID) },
     name: { type: GraphQLString },
     age: { type: GraphQLInt },
     class: { type: GraphQLString },
-    subjects: { type: GraphQLList(GraphQLNonNull(GraphQLString)) },
+    subjects: {
+      type: new GraphQLList(new GraphQLNonNull(GraphQLString)),
+    },
     attendance: { type: GraphQLFloat },
     email: { type: GraphQLString },
     phone: { type: GraphQLString },
@@ -210,14 +220,15 @@ const QueryType = new GraphQLObjectType({
     },
 
     employees: {
-      type: GraphQLNonNull(GraphQLList(GraphQLNonNull(EmployeeType))),
+      type: new GraphQLNonNull(
+        new GraphQLList(new GraphQLNonNull(EmployeeType))
+      ),
       args: {
         filter: { type: EmployeeFilterInput },
         sortBy: { type: EmployeeSortFieldEnum },
         sortOrder: { type: SortOrderEnum },
       },
       resolve: async (parent, { filter, sortBy, sortOrder }, context) => {
-        // both roles can read; you can restrict if needed
         requireAuth(context);
         const query = buildEmployeeQuery(filter);
         const sort = buildSort(sortBy, sortOrder);
@@ -228,7 +239,7 @@ const QueryType = new GraphQLObjectType({
     employee: {
       type: EmployeeType,
       args: {
-        id: { type: GraphQLNonNull(GraphQLID) },
+        id: { type: new GraphQLNonNull(GraphQLID) },
       },
       resolve: (parent, { id }, context) => {
         requireAuth(context);
@@ -237,7 +248,7 @@ const QueryType = new GraphQLObjectType({
     },
 
     employeesPaginated: {
-      type: GraphQLNonNull(EmployeePageType),
+      type: new GraphQLNonNull(EmployeePageType),
       args: {
         filter: { type: EmployeeFilterInput },
         sortBy: { type: EmployeeSortFieldEnum },
@@ -278,15 +289,14 @@ const MutationType = new GraphQLObjectType({
   name: "Mutation",
   fields: () => ({
     register: {
-      type: GraphQLNonNull(AuthPayloadType),
+      type: new GraphQLNonNull(AuthPayloadType),
       args: {
-        name: { type: GraphQLNonNull(GraphQLString) },
-        email: { type: GraphQLNonNull(GraphQLString) },
-        password: { type: GraphQLNonNull(GraphQLString) },
-        role: { type: RoleEnum }, // optional: ADMIN / EMPLOYEE
+        name: { type: new GraphQLNonNull(GraphQLString) },
+        email: { type: new GraphQLNonNull(GraphQLString) },
+        password: { type: new GraphQLNonNull(GraphQLString) },
+        role: { type: RoleEnum },
       },
       resolve: async (parent, { name, email, password, role }) => {
-        // For the assignment: we allow open registration.
         const existing = await User.findOne({ email });
         if (existing) {
           throw new Error("User with this email already exists");
@@ -316,10 +326,10 @@ const MutationType = new GraphQLObjectType({
     },
 
     login: {
-      type: GraphQLNonNull(AuthPayloadType),
+      type: new GraphQLNonNull(AuthPayloadType),
       args: {
-        email: { type: GraphQLNonNull(GraphQLString) },
-        password: { type: GraphQLNonNull(GraphQLString) },
+        email: { type: new GraphQLNonNull(GraphQLString) },
+        password: { type: new GraphQLNonNull(GraphQLString) },
       },
       resolve: async (parent, { email, password }) => {
         const user = await User.findOne({ email });
@@ -343,9 +353,9 @@ const MutationType = new GraphQLObjectType({
     },
 
     addEmployee: {
-      type: GraphQLNonNull(EmployeeType),
+      type: new GraphQLNonNull(EmployeeType),
       args: {
-        input: { type: GraphQLNonNull(AddEmployeeInput) },
+        input: { type: new GraphQLNonNull(AddEmployeeInput) },
       },
       resolve: async (parent, { input }, context) => {
         requireRole(context, ["ADMIN"]);
@@ -355,9 +365,9 @@ const MutationType = new GraphQLObjectType({
     },
 
     updateEmployee: {
-      type: GraphQLNonNull(EmployeeType),
+      type: new GraphQLNonNull(EmployeeType),
       args: {
-        input: { type: GraphQLNonNull(UpdateEmployeeInput) },
+        input: { type: new GraphQLNonNull(UpdateEmployeeInput) },
       },
       resolve: async (parent, { input }, context) => {
         requireRole(context, ["ADMIN"]);
@@ -367,6 +377,18 @@ const MutationType = new GraphQLObjectType({
         });
         if (!emp) throw new Error("Employee not found");
         return emp;
+      },
+    },
+    
+    deleteEmployee: {
+      type: new GraphQLNonNull(GraphQLBoolean),
+      args: {
+        id: { type: new GraphQLNonNull(GraphQLID) },
+      },
+      resolve: async (parent, { id }, context) => {
+        requireRole(context, ["ADMIN"]);
+        const deleted = await Employee.findByIdAndDelete(id);
+        return !!deleted;
       },
     },
   }),
